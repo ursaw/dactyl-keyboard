@@ -76,8 +76,8 @@ else:
 ####################################################
 
 
-debug_exports = False 
-debug_trace = False
+debug_exports = True 
+debug_trace = True
 
 def debugprint(info):
     if debug_trace:
@@ -524,7 +524,7 @@ def y_rot(shape, angle):
 
 
 def key_place(shape, column, row):
-    debugprint('key_place()')
+    debugprint(f'key_place(shape,column={column}, row={row})')
     return apply_key_geometry(shape, translate, x_rot, y_rot, column, row)
 
 
@@ -2349,7 +2349,11 @@ def wall_locate3(dx, dy, back=False):
         ]
 
 
-def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, skeleton=False, skel_bottom=False):
+def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, skeleton=False, skel_bottom=False,mv_outer=0):
+    """
+    Args:
+        mv_outer(float): 0 or move outer wall by mm.
+    """
     debugprint("wall_brace()")
     hulls = []
 
@@ -2369,27 +2373,41 @@ def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, ske
         hulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
 
     shape1 = hull_from_shapes(hulls)
-
+    hulltmp = hulls
     hulls = []
-    if not skeleton:
+    if mv_outer==0:
+        if not skeleton:
+            hulls.append(place1(translate(post1, wall_locate2(dx1, dy1))))
+        if not skeleton or skel_bottom:
+            hulls.append(place1(translate(post1, wall_locate3(dx1, dy1, back))))
+        if not skeleton:
+            hulls.append(place2(translate(post2, wall_locate2(dx2, dy2))))
+        if not skeleton or skel_bottom :
+            hulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
+    else: # monoblock 
+        pos= [wall_locate2(dx1, dy1)]
         hulls.append(place1(translate(post1, wall_locate2(dx1, dy1))))
-    if not skeleton or skel_bottom:
+        pos.append(wall_locate3(dx1, dy1, back))
         hulls.append(place1(translate(post1, wall_locate3(dx1, dy1, back))))
-    if not skeleton:
+        pos.append( wall_locate2(dx2, dy2))
         hulls.append(place2(translate(post2, wall_locate2(dx2, dy2))))
-    if not skeleton or skel_bottom:
+        pos.append( wall_locate3(dx2, dy2, back))
         hulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
+       
+        pass
+
+
 
     if len(hulls)>0:
         shape2 = bottom_hull(hulls)
+        #if mv_outer>0:
         shape1 = union([shape1, shape2])
-        #shape1 = add([shape1, shape2])
 
     return shape1
 
 
-def key_wall_brace(x1, y1, dx1, dy1, post1, x2, y2, dx2, dy2, post2, back=False, skeleton=False, skel_bottom=False):
-    debugprint("key_wall_brace()")
+def key_wall_brace(x1, y1, dx1, dy1, post1, x2, y2, dx2, dy2, post2, back=False, skeleton=False, skel_bottom=False,mv_outer=0):
+    debugprint(f"key_wall_brace(x1={x1}, y1={y1}, dx1={dx1}, dy1={dy1})")
     return wall_brace(
         (lambda shape: key_place(shape, x1, y1)),
         dx1,
@@ -2401,7 +2419,7 @@ def key_wall_brace(x1, y1, dx1, dy1, post1, x2, y2, dx2, dy2, post2, back=False,
         post2,
         back,
         skeleton=skeleton,
-        skel_bottom=False,
+        skel_bottom=False,mv_outer=mv_outer
     )
 
 
@@ -2438,7 +2456,7 @@ def back_wall(skeleton=False):
 
 
 def right_wall(skeleton=False):
-    print("right_wall()")
+    print(f"right_wall(skeleton={skeleton})")
     y = 0
 
     shape = None
@@ -2474,8 +2492,9 @@ def right_wall(skeleton=False):
     return shape
 
 
-def left_wall(side='right', skeleton=False):
-    print('left_wall()')
+def left_wall(side='right', skeleton=False, mv_outer=0):
+    print(f'left_wall(side={side}, skeleton={skeleton}, mv_outer={mv_outer})')
+
     shape = union([wall_brace(
         (lambda sh: key_place(sh, 0, 0)), 0, 1, web_post_tl(),
         (lambda sh: left_key_place(sh, 0, 1, side=side)), 0, 1, web_post(),
@@ -2492,39 +2511,43 @@ def left_wall(side='right', skeleton=False):
     for i in range(corner+1):
         y = i
         low = (y == (corner))
+        mvo = mv_outer if i < corner else 0
+        # wall part thick
         temp_shape1 = wall_brace(
             (lambda sh: left_key_place(sh, y, 1, side=side)), -1, 0, web_post(),
             (lambda sh: left_key_place(sh, y, -1, low_corner=low, side=side)), -1, 0, web_post(),
-        skeleton=skeleton and (y < (corner)),
+        skeleton=skeleton and (y < (corner)),mv_outer=mvo
         )
         shape = union([shape, temp_shape1])
-
+       
+        # roof part thick
         temp_shape2 = hull_from_shapes((
             key_place(web_post_tl(), 0, y),
             key_place(web_post_bl(), 0, y),
             left_key_place(web_post(), y, 1, side=side),
             left_key_place(web_post(), y, -1, low_corner=low, side=side),
         ))
-
         shape = union([shape, temp_shape2])
 
     for i in range(corner):
         y = i + 1
         low = (y == (corner))
+
+        # wall parts thin
         temp_shape1 = wall_brace(
             (lambda sh: left_key_place(sh, y - 1, -1, side=side)), -1, 0, web_post(),
             (lambda sh: left_key_place(sh, y, 1, side=side)), -1, 0, web_post(),
-            skeleton=skeleton and (y < (corner)),
+            skeleton=skeleton and (y < (corner)),mv_outer=mv_outer
         )
         shape = union([shape, temp_shape1])
 
+        # roof parts thin
         temp_shape2 = hull_from_shapes((
             key_place(web_post_tl(), 0, y),
             key_place(web_post_bl(), 0, y - 1),
             left_key_place(web_post(), y, 1, side=side),
             left_key_place(web_post(), y - 1, -1, side=side),
         ))
-
         shape = union([shape, temp_shape2])
 
     return shape
@@ -3141,14 +3164,14 @@ def carbonfet_thumb_connection(side='right', skeleton=False):
 
     return shape
 
-def case_walls(side='right', skeleton=False):
-    print('case_walls()')
+def case_walls(side='right', skeleton=False,mv_outer=0):
+    print(f'case_walls(side={side})')
     return (
         union([
-            back_wall(skeleton=skeleton),
-            left_wall(side=side, skeleton=skeleton),
+            ## back_wall(skeleton=skeleton),
+            left_wall(side=side, skeleton=skeleton, mv_outer=mv_outer),
             right_wall(skeleton=skeleton),
-            front_wall(skeleton=skeleton),
+            ## front_wall(skeleton=skeleton),
             # thumb_walls(side=side),
             # thumb_connection(side=side),
         ])
@@ -4024,7 +4047,7 @@ def wire_posts():
 
 
 def model_side(side="right"):
-    print('model_right()')
+    print(f'model_right({side})')
     #shape = add([key_holes(side=side)])
     shape = union([key_holes(side=side)])
     if debug_exports:
@@ -4351,7 +4374,21 @@ def run():
         export_file(shape=union((oled_clip_mount_frame()[1], oled_clip())),
                             fname=path.join(save_path, config_name + r"_oled_clip_assy_test"))
 
+
+def stp_URWI():
+
+    mv_outer = 200 # in mm
+    tilt = 20 # pi/9.0   # 20 degrees
+    xxxx = rotate(translate(case_walls(mv_outer=mv_outer), [0, 0, 0]),(0,0,0)) # [mv_outer, 0, 0]),(0,0,tilt))
+    ##xxxx = case_walls()
+    import pathlib
+    save_path = pathlib.Path(r"C:\Users\Anwender\Documents\keyboard\dactyl-keyboard\things")
+    export_file(shape=xxxx, fname=path.join(save_path, config_name + r"_WIP"))
+    return    
+
 # base = baseplate()
 # export_file(shape=base, fname=path.join(save_path, config_name + r"_plate"))
 if __name__ == '__main__':
-    run()
+    stp_URWI()    
+    # run()
+
