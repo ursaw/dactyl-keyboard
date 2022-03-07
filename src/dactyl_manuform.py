@@ -1,11 +1,11 @@
 import numpy as np
 from numpy import pi
 import os.path as path
+import pathlib
 import getopt, sys
 import json
 import os
 import copy
-
 from scipy.spatial import ConvexHull as sphull
 
 def deg2rad(degrees: float) -> float:
@@ -15,7 +15,7 @@ def deg2rad(degrees: float) -> float:
 def rad2deg(rad: float) -> float:
     return rad * 180 / pi
 
-
+dbg_urs=False
 ###############################################
 # EXTREMELY UGLY BUT FUNCTIONAL BOOTSTRAP
 ###############################################
@@ -2375,6 +2375,7 @@ def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, ske
     shape1 = hull_from_shapes(hulls)
     hulltmp = hulls
     hulls = []
+    innerhulls=[]
     if mv_outer==0:
         if not skeleton:
             hulls.append(place1(translate(post1, wall_locate2(dx1, dy1))))
@@ -2385,15 +2386,14 @@ def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, ske
         if not skeleton or skel_bottom :
             hulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
     else: # monoblock 
-        pos= [wall_locate2(dx1, dy1)]
-        hulls.append(place1(translate(post1, wall_locate2(dx1, dy1))))
-        pos.append(wall_locate3(dx1, dy1, back))
-        hulls.append(place1(translate(post1, wall_locate3(dx1, dy1, back))))
-        pos.append( wall_locate2(dx2, dy2))
-        hulls.append(place2(translate(post2, wall_locate2(dx2, dy2))))
-        pos.append( wall_locate3(dx2, dy2, back))
-        hulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
-       
+        rotvec=[0,0,0]
+        innerhulls.append(place1(translate(post1, wall_locate2(dx1, dy1))))
+        innerhulls.append(place1(translate(post1, wall_locate3(dx1, dy1, back))))
+        innerhulls.append(place2(translate(post2, wall_locate2(dx2, dy2))))
+        innerhulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
+        if True:
+            # helpers_solid.debug_urs=True
+            export_file(shape=bottom_hull(innerhulls), fname=path.join(save_path, "_WIP"))
         pass
 
 
@@ -2402,7 +2402,10 @@ def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, ske
         shape2 = bottom_hull(hulls)
         #if mv_outer>0:
         shape1 = union([shape1, shape2])
-
+    
+    if len(innerhulls):
+        shape1 = union([shape1, rotate(bottom_hull(innerhulls),(0,90,0))])
+    
     return shape1
 
 
@@ -3168,10 +3171,10 @@ def case_walls(side='right', skeleton=False,mv_outer=0):
     print(f'case_walls(side={side})')
     return (
         union([
-            ## back_wall(skeleton=skeleton),
+            back_wall(skeleton=skeleton),
             left_wall(side=side, skeleton=skeleton, mv_outer=mv_outer),
             right_wall(skeleton=skeleton),
-            ## front_wall(skeleton=skeleton),
+            front_wall(skeleton=skeleton),
             # thumb_walls(side=side),
             # thumb_connection(side=side),
         ])
@@ -4376,19 +4379,26 @@ def run():
 
 
 def stp_URWI():
-
-    mv_outer = 200 # in mm
-    tilt = 20 # pi/9.0   # 20 degrees
-    xxxx = rotate(translate(case_walls(mv_outer=mv_outer), [0, 0, 0]),(0,0,0)) # [mv_outer, 0, 0]),(0,0,tilt))
-    ##xxxx = case_walls()
-    import pathlib
-    save_path = pathlib.Path(r"C:\Users\Anwender\Documents\keyboard\dactyl-keyboard\things")
+    save_path = pathlib.Path(__file__).parent.parent / 'things'
+    mv_outer = locals().get("monoblock", {}).get('spread', 100) # in mm
+    angle = locals().get("monoblock", {}).get('angle',0) # in mm 20 # pi/9.0   # 20 degrees
+    # left_wall(side=side, skeleton=skeleton, mv_outer=mv_outer),
+    xxxx = rotate(translate(left_wall(side='right',mv_outer=mv_outer), [0, 0, 0]),(0,0,0)) # [mv_outer, 0, 0]),(0,0,tilt))
+    cutdim = 200 
+    cutobj = translate(box(cutdim,cutdim,cutdim),(cutdim/2,0,0))
+    export_file(shape=cutobj, fname=path.join(save_path, config_name + r"_CUT"))
+    
+    # example cut
+    # xxxx = difference(model_side()[0],[cutobj])  
+    
     export_file(shape=xxxx, fname=path.join(save_path, config_name + r"_WIP"))
     return    
 
 # base = baseplate()
 # export_file(shape=base, fname=path.join(save_path, config_name + r"_plate"))
 if __name__ == '__main__':
-    stp_URWI()    
-    # run()
+    if locals().get("monoblock", False):
+        stp_URWI()   
+    else: 
+        run()
 
