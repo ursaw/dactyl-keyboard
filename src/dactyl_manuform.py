@@ -15,7 +15,6 @@ def deg2rad(degrees: float) -> float:
 def rad2deg(rad: float) -> float:
     return rad * 180 / pi
 
-dbg_urs=False
 ###############################################
 # EXTREMELY UGLY BUT FUNCTIONAL BOOTSTRAP
 ###############################################
@@ -76,7 +75,7 @@ else:
 ####################################################
 
 
-debug_exports = True 
+debug_exports = True
 debug_trace = True
 
 def debugprint(info):
@@ -591,7 +590,7 @@ def caps(cap_type="MX"):
 
 
 def web_post():
-    debugprint('web_post()')
+    debugprint(f'web_post(post_size={post_size})')
     post = box(post_size, post_size, web_thickness)
     post = translate(post, (0, 0, plate_thickness - (web_thickness / 2)))
     return post
@@ -2349,10 +2348,10 @@ def wall_locate3(dx, dy, back=False):
         ]
 
 
-def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, skeleton=False, skel_bottom=False,mv_outer=0):
+def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, skeleton=False, skel_bottom=False, monoblock=False):
     """
     Args:
-        mv_outer(float): 0 or move outer wall by mm.
+        monoblock(bool|obj): prepare for monoblock bridge
     """
     debugprint("wall_brace()")
     hulls = []
@@ -2373,10 +2372,9 @@ def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, ske
         hulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
 
     shape1 = hull_from_shapes(hulls)
-    hulltmp = hulls
+
     hulls = []
-    innerhulls=[]
-    if mv_outer==0:
+    if not monoblock:
         if not skeleton:
             hulls.append(place1(translate(post1, wall_locate2(dx1, dy1))))
         if not skeleton or skel_bottom:
@@ -2385,31 +2383,15 @@ def wall_brace(place1, dx1, dy1, post1, place2, dx2, dy2, post2, back=False, ske
             hulls.append(place2(translate(post2, wall_locate2(dx2, dy2))))
         if not skeleton or skel_bottom :
             hulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
-    else: # monoblock 
-        rotvec=[0,0,0]
-        innerhulls.append(place1(translate(post1, wall_locate2(dx1, dy1))))
-        innerhulls.append(place1(translate(post1, wall_locate3(dx1, dy1, back))))
-        innerhulls.append(place2(translate(post2, wall_locate2(dx2, dy2))))
-        innerhulls.append(place2(translate(post2, wall_locate3(dx2, dy2, back))))
-        if True:
-            # helpers_solid.debug_urs=True
-            export_file(shape=bottom_hull(innerhulls), fname=path.join(save_path, "_WIP"))
-        pass
-
-
 
     if len(hulls)>0:
         shape2 = bottom_hull(hulls)
-        #if mv_outer>0:
         shape1 = union([shape1, shape2])
-    
-    if len(innerhulls):
-        shape1 = union([shape1, rotate(bottom_hull(innerhulls),(0,90,0))])
-    
+
     return shape1
 
 
-def key_wall_brace(x1, y1, dx1, dy1, post1, x2, y2, dx2, dy2, post2, back=False, skeleton=False, skel_bottom=False,mv_outer=0):
+def key_wall_brace(x1, y1, dx1, dy1, post1, x2, y2, dx2, dy2, post2, back=False, skeleton=False, skel_bottom=False):
     debugprint(f"key_wall_brace(x1={x1}, y1={y1}, dx1={dx1}, dy1={dy1})")
     return wall_brace(
         (lambda shape: key_place(shape, x1, y1)),
@@ -2422,7 +2404,7 @@ def key_wall_brace(x1, y1, dx1, dy1, post1, x2, y2, dx2, dy2, post2, back=False,
         post2,
         back,
         skeleton=skeleton,
-        skel_bottom=False,mv_outer=mv_outer
+        skel_bottom=False,
     )
 
 
@@ -2495,8 +2477,8 @@ def right_wall(skeleton=False):
     return shape
 
 
-def left_wall(side='right', skeleton=False, mv_outer=0):
-    print(f'left_wall(side={side}, skeleton={skeleton}, mv_outer={mv_outer})')
+def left_wall(side='right', skeleton=False, monoblock=False):
+    print(f'left_wall(side={side}, skeleton={skeleton}, monoblock={monoblock})')
 
     shape = union([wall_brace(
         (lambda sh: key_place(sh, 0, 0)), 0, 1, web_post_tl(),
@@ -2514,15 +2496,15 @@ def left_wall(side='right', skeleton=False, mv_outer=0):
     for i in range(corner+1):
         y = i
         low = (y == (corner))
-        mvo = mv_outer if i < corner else 0
+        mnblc = True if monoblock else False # TODO check and  i >= corner
         # wall part thick
         temp_shape1 = wall_brace(
             (lambda sh: left_key_place(sh, y, 1, side=side)), -1, 0, web_post(),
             (lambda sh: left_key_place(sh, y, -1, low_corner=low, side=side)), -1, 0, web_post(),
-        skeleton=skeleton and (y < (corner)),mv_outer=mvo
+        skeleton=skeleton and (y < (corner)),monoblock=mnblc
         )
         shape = union([shape, temp_shape1])
-       
+
         # roof part thick
         temp_shape2 = hull_from_shapes((
             key_place(web_post_tl(), 0, y),
@@ -2535,12 +2517,12 @@ def left_wall(side='right', skeleton=False, mv_outer=0):
     for i in range(corner):
         y = i + 1
         low = (y == (corner))
-
+        mnblc = True if  monoblock else False  # TODO check and i >= corner
         # wall parts thin
         temp_shape1 = wall_brace(
             (lambda sh: left_key_place(sh, y - 1, -1, side=side)), -1, 0, web_post(),
             (lambda sh: left_key_place(sh, y, 1, side=side)), -1, 0, web_post(),
-            skeleton=skeleton and (y < (corner)),mv_outer=mv_outer
+            skeleton=skeleton and (y < (corner)), monoblock=mnblc
         )
         shape = union([shape, temp_shape1])
 
@@ -2552,6 +2534,52 @@ def left_wall(side='right', skeleton=False, mv_outer=0):
             left_key_place(web_post(), y - 1, -1, side=side),
         ))
         shape = union([shape, temp_shape2])
+
+    if monoblock:
+        # reference points
+        wbpst = web_post()
+        wbmid = translate(wbpst,(-1*monoblock['spread'],0,0))
+
+        bridge_hull = []
+
+        for i in range(corner+1):
+
+            # thick part
+            pI1 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i ,  1, side=side)
+            pI2 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i , -1, side=side)
+            pO1 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i ,  1, side=side)
+            pO2 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i , -1, side=side)
+
+            bridge_hull.append(triangle_hulls([pI1,pI2,pO1]))
+            bridge_hull.append(triangle_hulls([pI2,pO1,pO2]))
+
+            # vertical wall  +Y
+            if i == 0 :
+                pI1 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i, 1, side=side)
+                pI2 = left_key_place(translate(wbpst, wall_locate2(-1,-1)), i, 1, side=side)
+                pO1 = left_key_place(translate(wbmid, wall_locate2(-1,-1)), i, 1, side=side)
+                pO2 = left_key_place(translate(wbmid, wall_locate2(-1, 0)), i, 1, side=side)
+                bridge_hull.append(bottom_hull([pI1,pI2,pO1,pO2]))
+            elif i == corner:
+                # vertical wall  -Y
+                # TODO small artifact
+                pI1 = left_key_place(translate(wbpst, wall_locate2(-1,0)), i, -1, side=side)
+                pI2 = left_key_place(translate(wbpst, wall_locate2(-1,1)), i, -1, side=side)
+                pO1 = left_key_place(translate(wbmid, wall_locate2(-1,1)), i, -1, side=side)
+                pO2 = left_key_place(translate(wbmid, wall_locate2(-1,0)), i, -1, side=side)
+                bridge_hull.append(bottom_hull([pI1,pI2,pO1,pO2]))
+
+            # thin part
+            if i < corner:
+                pI1 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i   ,-1, side=side)
+                pI2 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i+1 , 1 ,side=side)
+                pO1 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i   ,-1, side=side)
+                pO2 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i+1 , 1, side=side)
+                bridge_hull.append(triangle_hulls([pI1,pI2,pO1]))
+                bridge_hull.append(triangle_hulls([pI2,pO1,pO2]))
+
+        bridge_hull.append(shape)
+        shape=union(bridge_hull)
 
     return shape
 
@@ -3167,12 +3195,12 @@ def carbonfet_thumb_connection(side='right', skeleton=False):
 
     return shape
 
-def case_walls(side='right', skeleton=False,mv_outer=0):
+def case_walls(side='right', skeleton=False,monoblock=False):
     print(f'case_walls(side={side})')
     return (
         union([
             back_wall(skeleton=skeleton),
-            left_wall(side=side, skeleton=skeleton, mv_outer=mv_outer),
+            left_wall(side=side, skeleton=skeleton, monoblock=monoblock),
             right_wall(skeleton=skeleton),
             front_wall(skeleton=skeleton),
             # thumb_walls(side=side),
@@ -4381,18 +4409,16 @@ def run():
 def stp_URWI():
     save_path = pathlib.Path(__file__).parent.parent / 'things'
     mv_outer = locals().get("monoblock", {}).get('spread', 100) # in mm
+
     angle = locals().get("monoblock", {}).get('angle',0) # in mm 20 # pi/9.0   # 20 degrees
-    # left_wall(side=side, skeleton=skeleton, mv_outer=mv_outer),
-    xxxx = rotate(translate(left_wall(side='right',mv_outer=mv_outer), [0, 0, 0]),(0,0,0)) # [mv_outer, 0, 0]),(0,0,tilt))
-    cutdim = 200 
-    cutobj = translate(box(cutdim,cutdim,cutdim),(cutdim/2,0,0))
-    export_file(shape=cutobj, fname=path.join(save_path, config_name + r"_CUT"))
-    
-    # example cut
-    # xxxx = difference(model_side()[0],[cutobj])  
-    
-    export_file(shape=xxxx, fname=path.join(save_path, config_name + r"_WIP"))
-    return    
+    shape = rotate(translate(left_wall(side='right',monoblock=monoblock), [mv_outer, 0, 0]),(0,0,angle))
+
+    # cut off in the middle
+    cutdim = max(20000, mv_outer)
+    cutobj = translate(box(cutdim, cutdim, cutdim), (-cutdim/2, 0, 0))
+    shape = difference(shape,[cutobj])
+    export_file(shape=shape, fname=path.join(save_path, config_name + r"_WIP"))
+    return
 
 # base = baseplate()
 # export_file(shape=base, fname=path.join(save_path, config_name + r"_plate"))
