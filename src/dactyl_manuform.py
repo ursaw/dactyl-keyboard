@@ -1,7 +1,7 @@
+from time import monotonic
 import numpy as np
 from numpy import pi
 import os.path as path
-import pathlib
 import getopt, sys
 import json
 import os
@@ -75,8 +75,8 @@ else:
 ####################################################
 
 
-debug_exports = True
-debug_trace = True
+debug_exports = False
+debug_trace = False
 
 def debugprint(info):
     if debug_trace:
@@ -4077,22 +4077,26 @@ def wire_posts():
     return shape
 
 
-def model_side(side="right"):
-    print(f'model_right({side})')
+def model_side(side="right", monoblock=False):
+    print(f'model_right({side}, monoblock={monoblock})')
     #shape = add([key_holes(side=side)])
     shape = union([key_holes(side=side)])
     if debug_exports:
         export_file(shape=shape, fname=path.join(r"..", "things", r"debug_key_plates"))
+
+    # connector for monoblock only on left side
     connector_shape = connectors()
     shape = union([shape, connector_shape])
+
     if debug_exports:
         export_file(shape=shape, fname=path.join(r"..", "things", r"debug_connector_shape"))
-    walls_shape = case_walls(side=side, skeleton=skeletal)
+    walls_shape = case_walls(side=side, skeleton=skeletal, monoblock=monoblock)
     if debug_exports:
         export_file(shape=walls_shape, fname=path.join(r"..", "things", r"debug_walls_shape"))
 
     s2 = union([walls_shape])
     s2 = union([s2, *screw_insert_outers(side=side)])
+
 
     if controller_mount_type in ['RJ9_USB_TEENSY', 'USB_TEENSY']:
         s2 = union([s2, teensy_holder()])
@@ -4115,7 +4119,7 @@ def model_side(side="right"):
         s2 = difference(s2, pcb_screw_hole())
 
     if controller_mount_type in [None, 'None']:
-        0 # do nothing, only here to expressly state inaction.
+        pass # do nothing, only here to expressly state inaction.
 
     s2 = difference(s2, [union(screw_insert_holes(side=side))])
     shape = union([shape, s2])
@@ -4236,7 +4240,7 @@ def model_side(side="right"):
 
             if show_caps:
                 main_shape = add([main_shape, ball])
-
+ 
 
 
 
@@ -4360,8 +4364,7 @@ def baseplate(wedge_angle=None, side='right'):
         return sl.projection(cut=True)(shape)
 
 def run():
-
-    mod_r, tmb_r = model_side(side="right")
+    mod_r, tmb_r = model_side(side="right", monoblock=monoblock)
     export_file(shape=mod_r, fname=path.join(save_path, config_name + r"_right"))
     export_file(shape=tmb_r, fname=path.join(save_path, config_name + r"_thumb_right"))
 
@@ -4370,7 +4373,30 @@ def run():
     export_file(shape=base, fname=path.join(save_path, config_name + r"_right_plate"))
     export_dxf(shape=base, fname=path.join(save_path, config_name + r"_right_plate"))
 
-    if symmetry == "asymmetric":
+    if monoblock:       
+        # prepare left side
+        mv_outer = globals().get("monoblock", {}).get('spread',100) # in mm 
+        angle = globals().get("monoblock", {}).get('angle',0) # in degrees
+        mod_r = rotate(translate(mod_r, [mv_outer, 0, 0]),(0,0,angle))
+
+        # cut off in the middle
+        cutdim = max(20000, mv_outer)
+        cutobj = translate(box(cutdim, cutdim, cutdim), (-cutdim/2, 0, 0))
+        mod_r = difference(mod_r,[cutobj])
+        
+        # left side ......... no controller ...  HACK with globals...
+        tmp_cmt = globals()['controller_mount_type']  
+        globals()['controller_mount_type']  = 'None'
+        mod_l, tmb_l = model_side(side="left", monoblock=monoblock)
+        mod_l = rotate(translate(mod_l, [-mv_outer, 0, 0]),(0,0,-angle))
+        globals()['controller_mount_type']  =  tmp_cmt  
+        
+        cutobj = translate(box(cutdim, cutdim, cutdim), (cutdim/2, 0, 0))
+        mod_l = difference(mod_l,[cutobj])
+        # TODO new baseblate
+        export_file(shape=union([mod_r, mod_l]), fname=path.join(save_path, config_name + r"_monoblock"))
+
+    elif symmetry == "asymmetric":
         mod_l, tmb_l = model_side(side="left")
         export_file(shape=mod_l, fname=path.join(save_path, config_name + r"_left"))
         export_file(shape=tmb_l, fname=path.join(save_path, config_name + r"_thumb_left"))
@@ -4407,15 +4433,19 @@ def run():
 
 
 def stp_URWI():
+    import pathlib
     save_path = pathlib.Path(__file__).parent.parent / 'things'
     mv_outer = locals().get("monoblock", {}).get('spread', 100) # in mm
+    dbg_obj = left_wall(side='right',monoblock=monoblock)
 
+    # dbg_obj = case_walls(side='right', skeleton=False,monoblock=monoblock)
     angle = locals().get("monoblock", {}).get('angle',0) # in mm 20 # pi/9.0   # 20 degrees
-    shape = rotate(translate(left_wall(side='right',monoblock=monoblock), [mv_outer, 0, 0]),(0,0,angle))
+    shape = rotate(translate(dbg_obj, [mv_outer, 0, 0]),(0,0,angle))
 
     # cut off in the middle
-    cutdim = max(20000, mv_outer)
-    cutobj = translate(box(cutdim, cutdim, cutdim), (-cutdim/2, 0, 0))
+    if False:
+        cutdim = max(20000, mv_outer)
+        cutobj = translate(box(cutdim, cutdim, cutdim), (-cutdim/2, 0, 0))
     shape = difference(shape,[cutobj])
     export_file(shape=shape, fname=path.join(save_path, config_name + r"_WIP"))
     return
@@ -4423,7 +4453,7 @@ def stp_URWI():
 # base = baseplate()
 # export_file(shape=base, fname=path.join(save_path, config_name + r"_plate"))
 if __name__ == '__main__':
-    if locals().get("monoblock", False):
+    if False: # or locals().get("monoblockxx", False):
         stp_URWI()   
     else: 
         run()

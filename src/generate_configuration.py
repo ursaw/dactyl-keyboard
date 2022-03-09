@@ -58,6 +58,14 @@ shape_config = {
     'post_adj': 0,
 
     ##############################
+    # Monoblock PARAMETERS
+    ##############################
+    'monoblock': False, #{
+                        #     'spread': 200,  # move outside
+                        #     'angle': 20,  # angle in degrees
+                        # },
+
+    ##############################
     # THUMB PARAMETERS
     ##############################
 
