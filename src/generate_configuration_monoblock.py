@@ -19,31 +19,32 @@ shape_config = {
     ######################
 
     'save_dir': '.',
-    'config_name':  "DMONO",
+    'config_name':  "DMONO2",
 
     'show_caps': False,
     'show_pcbs': False, #only runs if caps are shown, easist place to initially inject geometry
 
-    'nrows':  2, #5,  # key rows
-    'ncols':  3, #6,  # key columns
+    'nrows':  5, #5,  # key rows
+    'ncols':  6, #6,  # key columns
 
     'alpha':  pi / 12.0,  # curvature of the columns
     'beta':  pi / 36.0,  # curvature of the rows
     'centercol':  3,  # controls left_right tilt / tenting (higher number is more tenting)
     'centerrow_offset': 3,  # rows from max, controls front_back tilt
-    'tenting_angle':  pi / 8.0,  # or, change this for more precise tenting control
+    'tenting_angle': 0.4, #  pi / 7.0,  # or, change this for more precise tenting control
 
     # symmetry states if it is a symmetric or asymmetric bui.  If asymmetric it doubles the generation time.
-    'symmetry':  "symmetric",  # "asymmetric" or "symmetric"
+    'symmetry':  "symmetric",  # "asymmetric" or "symmetric"  ignored when using monoblock
 
     'column_style_gt5':  "orthographic",
     'column_style':  "standard",  # options include :standard, :orthographic, and :fixed
-    'reduced_outer_keys': True,
-
+    # 'reduced_outer_keys': True,  
+    'reduced_inner_cols': 2,  #currently supports 0 or 2 due to thumb cluster attachment
+    'reduced_outer_cols': 2,
 
     'thumb_offsets':  [6, -3, 7],
     'keyboard_z_offset':  (
-        11  # controls overall height# original=9 with centercol=3# use 16 for centercol=2
+        25  # controls overall height# original=9 with centercol=3# use 16 for centercol=2
     ),
 
 
@@ -60,8 +61,8 @@ shape_config = {
     # Monoblock PARAMETERS
     ##############################
     'monoblock': {
-        'spread': 200,  # move outside
-        'angle': 20,  # angle in degrees
+        'spread': 90, # move outside from center: not easy to measure this number: just try...
+        'angle': 15,  # angle in degrees for each side out of X-axis
     },
 
     ##############################
@@ -69,13 +70,14 @@ shape_config = {
     ##############################
 
     # 'DEFAULT' 6-key, 'MINI' 5-key, 'CARBONFET' 6-key, 'MINIDOX' 3-key, 'TRACKBALL_ORBYL', 'TRACKBALL_CJ'
-    'thumb_style': 'CARBONFET',
+    'thumb_style': 'MINIDOX',
     'default_1U_cluster': True, # only used with default, makes top right thumb cluster key 1U
     # Thumb key size.  May need slight oversizing, check w/ caps.  Additional spacing will be automatically added for larger keys.
     'minidox_Usize': 1.6,
     # Thumb plate rotations, anything other than 90 degree increments WILL NOT WORK.
 
-    # Screw locations and extra screw locations for separable thumb, all from thumb origin
+    'mini_index_key': False,
+      # Screw locations and extra screw locations for separable thumb, all from thumb origin
     # Pulled out of hardcoding as drastic changes to the geometry may require fixes to the screw mounts.
     # First screw in separable should be similar to the standard location as it will receive the same modifiers.
     'default_thumb_screw_xy_locations': [[-21, -58]],
@@ -507,5 +509,5 @@ if __name__ == '__main__':
     save_config()
 
     ## HERE FOR QUICK TESTING, SHOULD BE COMMENTED ON COMMIT
-    from dactyl_manuform import *
-    run()
+    #import dactyl_manuform
+    #dactyl_manuform.run()

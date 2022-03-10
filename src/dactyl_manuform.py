@@ -1,4 +1,3 @@
-from time import monotonic
 import numpy as np
 from numpy import pi
 import os.path as path
@@ -6,6 +5,7 @@ import getopt, sys
 import json
 import os
 import copy
+
 from scipy.spatial import ConvexHull as sphull
 
 def deg2rad(degrees: float) -> float:
@@ -14,6 +14,7 @@ def deg2rad(degrees: float) -> float:
 
 def rad2deg(rad: float) -> float:
     return rad * 180 / pi
+
 
 ###############################################
 # EXTREMELY UGLY BUT FUNCTIONAL BOOTSTRAP
@@ -75,7 +76,7 @@ else:
 ####################################################
 
 
-debug_exports = False
+debug_exports = False 
 debug_trace = False
 
 def debugprint(info):
@@ -981,7 +982,7 @@ def default_thumbcaps():
 
 
 def default_thumb(side="right"):
-    print('thumb()')
+    debugprint('thumb()')
     shape = default_thumb_1x_layout(rotate(single_plate(side=side), (0, 0, -90)))
     shape = union([shape, default_thumb_15x_layout(rotate(single_plate(side=side), (0, 0, -90)))])
     shape = union([shape, default_thumb_15x_layout(double_plate(), plate=False)])
@@ -2478,7 +2479,7 @@ def right_wall(skeleton=False):
 
 
 def left_wall(side='right', skeleton=False, monoblock=False):
-    print(f'left_wall(side={side}, skeleton={skeleton}, monoblock={monoblock})')
+    debugprint(f'left_wall(side={side}, skeleton={skeleton}, monoblock={monoblock})')
 
     shape = union([wall_brace(
         (lambda sh: key_place(sh, 0, 0)), 0, 1, web_post_tl(),
@@ -2553,14 +2554,18 @@ def left_wall(side='right', skeleton=False, monoblock=False):
 
             if i == 0 :
                 # vertical wall  +Y
+                cut_off_part = hull_from_points([pI1, pI2 ,pO1, pO2,
+                                                 translate(pI2, (0, 0, 1000)),
+                                                 translate(pO1, (0, 0, 1000))])
+                export_file(shape=cut_off_part, fname=path.join(save_path, config_name + r"_cut_off_part"))
                 pI1 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i, 1, side=side)
                 pI2 = left_key_place(translate(wbpst, wall_locate2(-1,-1)), i, 1, side=side)
                 pO1 = left_key_place(translate(wbmid, wall_locate2(-1,-1)), i, 1, side=side)
                 pO2 = left_key_place(translate(wbmid, wall_locate2(-1, 0)), i, 1, side=side)
-                bridge_hull.append(bottom_hull([pI1,pI2,pO1,pO2]))
-
+                bridge_hull.append(difference(bottom_hull([pI1,pI2,pO1,pO2]), [cut_off_part]))
+                # bridge_hull.append(bottom_hull([pI1,pI2,pO1,pO2]))
             elif i == corner:
-               # vertical wall  -Y
+                # vertical wall  -Y
                 # this could definetly be solved smarter
                 cut_off_part = hull_from_points([pI1, pI2 ,pO1, pO2,
                                                  translate(pI1, (0, 0, 1000)),
@@ -3198,7 +3203,7 @@ def carbonfet_thumb_connection(side='right', skeleton=False):
     return shape
 
 def case_walls(side='right', skeleton=False,monoblock=False):
-    print(f'case_walls(side={side})')
+    debugprint(f'case_walls(side={side})')
     return (
         union([
             back_wall(skeleton=skeleton),
@@ -4080,7 +4085,7 @@ def wire_posts():
 
 
 def model_side(side="right", monoblock=False):
-    print(f'model_right({side}, monoblock={monoblock})')
+    debugprint(f'model_right({side}, monoblock={monoblock})')
     #shape = add([key_holes(side=side)])
     shape = union([key_holes(side=side)])
     if debug_exports:
@@ -4242,11 +4247,11 @@ def model_side(side="right", monoblock=False):
 
             if show_caps:
                 main_shape = add([main_shape, ball])
- 
 
 
 
 
+    
     if show_caps:
         main_shape = add([main_shape, caps()])
 
@@ -4366,6 +4371,7 @@ def baseplate(wedge_angle=None, side='right'):
         return sl.projection(cut=True)(shape)
 
 def run():
+
     mod_r, tmb_r = model_side(side="right", monoblock=monoblock)
     export_file(shape=mod_r, fname=path.join(save_path, config_name + r"_right"))
     export_file(shape=tmb_r, fname=path.join(save_path, config_name + r"_thumb_right"))
@@ -4375,28 +4381,30 @@ def run():
     export_file(shape=base, fname=path.join(save_path, config_name + r"_right_plate"))
     export_dxf(shape=base, fname=path.join(save_path, config_name + r"_right_plate"))
 
-    if monoblock:       
+    if monoblock:
         # prepare left side
-        mv_outer = globals().get("monoblock", {}).get('spread',100) # in mm 
+        mv_outer = globals().get("monoblock", {}).get('spread',100) # in mm
         angle = globals().get("monoblock", {}).get('angle',0) # in degrees
         mod_r = rotate(translate(mod_r, [mv_outer, 0, 0]),(0,0,angle))
-
+        base = rotate(translate(base, [mv_outer, 0, 0]),(0,0,angle))
         # cut off in the middle
         cutdim = max(20000, mv_outer)
         cutobj = translate(box(cutdim, cutdim, cutdim), (-cutdim/2, 0, 0))
         mod_r = difference(mod_r,[cutobj])
+        base = difference(base,[cutobj])
         
         # left side ......... no controller ...  HACK with globals...
-        tmp_cmt = globals()['controller_mount_type']  
+        tmp_cmt = globals()['controller_mount_type']
         globals()['controller_mount_type']  = 'None'
         mod_l, tmb_l = model_side(side="left", monoblock=monoblock)
         mod_l = rotate(translate(mod_l, [-mv_outer, 0, 0]),(0,0,-angle))
-        globals()['controller_mount_type']  =  tmp_cmt  
-        
+        globals()['controller_mount_type'] = tmp_cmt
+
         cutobj = translate(box(cutdim, cutdim, cutdim), (cutdim/2, 0, 0))
         mod_l = difference(mod_l,[cutobj])
-        # TODO new baseblate
+        # TODO fully  base plate integration
         export_file(shape=union([mod_r, mod_l]), fname=path.join(save_path, config_name + r"_monoblock"))
+        export_file(shape=union([base, mirror(base, 'YZ')]), fname=path.join(save_path, config_name + r"_monoblock_plate"))
 
     elif symmetry == "asymmetric":
         mod_l, tmb_l = model_side(side="left")
@@ -4433,30 +4441,7 @@ def run():
         export_file(shape=union((oled_clip_mount_frame()[1], oled_clip())),
                             fname=path.join(save_path, config_name + r"_oled_clip_assy_test"))
 
-
-def stp_URWI():
-    import pathlib
-    save_path = pathlib.Path(__file__).parent.parent / 'things'
-    mv_outer = locals().get("monoblock", {}).get('spread', 100) # in mm
-    dbg_obj = left_wall(side='right',monoblock=monoblock)
-
-    # dbg_obj = case_walls(side='right', skeleton=False,monoblock=monoblock)
-    angle = locals().get("monoblock", {}).get('angle',0) # in mm 20 # pi/9.0   # 20 degrees
-    shape = rotate(translate(dbg_obj, [mv_outer, 0, 0]),(0,0,angle))
-
-    # cut off in the middle
-    if False:
-        cutdim = max(20000, mv_outer)
-        cutobj = translate(box(cutdim, cutdim, cutdim), (-cutdim/2, 0, 0))
-        shape = difference(shape,[cutobj])
-    export_file(shape=shape, fname=path.join(save_path, config_name + r"_WIP"))
-    return
-
 # base = baseplate()
 # export_file(shape=base, fname=path.join(save_path, config_name + r"_plate"))
 if __name__ == '__main__':
-    if False: # or locals().get("monoblockxx", False):
-        stp_URWI()   
-    else: 
-        run()
-
+    run()
