@@ -2549,25 +2549,28 @@ def left_wall(side='right', skeleton=False, monoblock=False):
             pI2 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i , -1, side=side)
             pO1 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i ,  1, side=side)
             pO2 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i , -1, side=side)
+            bridge_hull.append(hull_from_points([pI1, pI2 ,pO1, pO2]))
 
-            bridge_hull.append(triangle_hulls([pI1,pI2,pO1]))
-            bridge_hull.append(triangle_hulls([pI2,pO1,pO2]))
-
-            # vertical wall  +Y
             if i == 0 :
+                # vertical wall  +Y
                 pI1 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i, 1, side=side)
                 pI2 = left_key_place(translate(wbpst, wall_locate2(-1,-1)), i, 1, side=side)
                 pO1 = left_key_place(translate(wbmid, wall_locate2(-1,-1)), i, 1, side=side)
                 pO2 = left_key_place(translate(wbmid, wall_locate2(-1, 0)), i, 1, side=side)
                 bridge_hull.append(bottom_hull([pI1,pI2,pO1,pO2]))
+
             elif i == corner:
-                # vertical wall  -Y
-                # TODO small artifact
+               # vertical wall  -Y
+                # this could definetly be solved smarter
+                cut_off_part = hull_from_points([pI1, pI2 ,pO1, pO2,
+                                                 translate(pI1, (0, 0, 1000)),
+                                                 translate(pO1, (0, 0, 1000))])
+
                 pI1 = left_key_place(translate(wbpst, wall_locate2(-1,0)), i, -1, side=side)
                 pI2 = left_key_place(translate(wbpst, wall_locate2(-1,1)), i, -1, side=side)
                 pO1 = left_key_place(translate(wbmid, wall_locate2(-1,1)), i, -1, side=side)
                 pO2 = left_key_place(translate(wbmid, wall_locate2(-1,0)), i, -1, side=side)
-                bridge_hull.append(bottom_hull([pI1,pI2,pO1,pO2]))
+                bridge_hull.append(difference(bottom_hull([pI1, pI2, pO1, pO2]), [cut_off_part]))
 
             # thin part
             if i < corner:
@@ -2575,8 +2578,7 @@ def left_wall(side='right', skeleton=False, monoblock=False):
                 pI2 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i+1 , 1 ,side=side)
                 pO1 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i   ,-1, side=side)
                 pO2 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i+1 , 1, side=side)
-                bridge_hull.append(triangle_hulls([pI1,pI2,pO1]))
-                bridge_hull.append(triangle_hulls([pI2,pO1,pO2]))
+                bridge_hull.append(hull_from_points([pI1, pI2 ,pO1, pO2]))
 
         bridge_hull.append(shape)
         shape=union(bridge_hull)
@@ -4446,7 +4448,7 @@ def stp_URWI():
     if False:
         cutdim = max(20000, mv_outer)
         cutobj = translate(box(cutdim, cutdim, cutdim), (-cutdim/2, 0, 0))
-    shape = difference(shape,[cutobj])
+        shape = difference(shape,[cutobj])
     export_file(shape=shape, fname=path.join(save_path, config_name + r"_WIP"))
     return
 
