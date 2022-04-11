@@ -63,6 +63,13 @@ shape_config = {
     'monoblock': {
         'spread': 90, # move outside from center: not easy to measure this number: just try...
         'angle': 20,  # angle in degrees for each side out of X-axis
+        'track_ball': True,                           # Trackball on top of monoblock
+        'tb_translational_offset': (0., -10., 54.),   # Usual do in center (x,y=0), but manually adjust hight
+        'tb_rotation_offset': (-5.0, 0.0, 0.0),       # Usual only rotation about X-axis for symmetry
+        'oled_mount_type':  'NONE',                   # deactivate with none, use keys as for normal OLEDs
+        'oled_mount_location_xyz': (0.0, 37.0, 65.0), # absolute coordinates.
+        'oled_mount_rotation_xyz': (18.0, 0.0, 0.0),  # rotations like tb_rotation_offset
+        # TODO work with oled_translation_offset, oled_rotation_offset
     },
 
     ##############################
@@ -109,8 +116,8 @@ shape_config = {
     ###################################
     'trackball_in_wall': False,  # Separate trackball option, placing it in the OLED area
     'tbiw_ball_center_row': 0,  # up from cornerrow instead of down from top
-    'tbiw_translational_offset': (2.0, -12.0, -10.0),
-    'tbiw_rotation_offset': (30.0, -10.0, 0.0),
+    'tbiw_translational_offset': (6.0, 8.0, -2.0), # (2.0, -12.0, -10.0),
+    'tbiw_rotation_offset': (0.0, 0.0, 20.0),#(30.0, -10.0, 0.0),
     'tbiw_left_wall_x_offset_override': 50.0,
     'tbiw_left_wall_z_offset_override': 0.0,
     'tbiw_left_wall_lower_x_offset': 15.0,
@@ -178,7 +185,7 @@ shape_config = {
     'trackball_modular_ring_height': 10.0,  # height mount ring down from ball height. Covers gaps on elevated ball.
     'trackball_modular_clearance': 0.5,  # height of ball from ring, used to create identical position to fixed.
 
-    'ball_side': 'both', #'left', 'right', or 'both'
+    'ball_side': 'right', #'left', 'right', or 'both'
     'ball_diameter': 34.0,
     'ball_wall_thickness': 3,  # should not be changed unless the import models are changed.
     'ball_gap': 1.0,
@@ -209,7 +216,7 @@ shape_config = {
     'left_wall_lower_x_offset': 0,  # specific values for the lower left corner.
     'left_wall_lower_y_offset': 0,  # specific values for the lower left corner.
     'left_wall_lower_z_offset': 0,
-    'wall_thickness':  3,  # wall thickness parameter used on upper/mid stage of the wall
+    'wall_thickness':  4.5,  # wall thickness parameter used on upper/mid stage of the wall
     'wall_base_y_thickness':  4.5,  # wall thickness at the lower stage
     'wall_base_x_thickness':  4.5,  # wall thickness at the lower stage
 

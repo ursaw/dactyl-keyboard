@@ -3546,6 +3546,10 @@ def generate_trackball_in_wall():
 
 
 def oled_position_rotation(side='right'):
+
+    if monoblock:
+        return  globals()['oled_mount_location_xyz'], globals()['oled_mount_rotation_xyz']
+
     _oled_center_row = None
     if trackball_in_wall and (side == ball_side or ball_side == 'both'):
         _oled_center_row = tbiw_oled_center_row
@@ -4395,6 +4399,11 @@ def baseplate(wedge_angle=None, side='right'):
 
 def run():
 
+    if globals().get("monoblock", {}).get("track_ball", False):
+        if  globals().get("trackball_in_wall"):
+            globals()['trackball_in_wall'] = False
+            print("CONF ERR: trackball_in_wall deactivated because monoblock.track_ball")
+
     mod_r, tmb_r = model_side(side="right", monoblock=monoblock)
     export_file(shape=mod_r, fname=path.join(save_path, config_name + r"_right"))
     export_file(shape=tmb_r, fname=path.join(save_path, config_name + r"_thumb_right"))
@@ -4427,8 +4436,59 @@ def run():
         mod_l = difference(mod_l,[cutobj])
         if False:
             mod_l = None
+
+        # combine two halfs
+        full_monoblock = union([mod_r, mod_l])
+
+        # add monoblock trackball
+        if globals().get("monoblock", {}).get("track_ball", False):
+            pos = globals().get("monoblock", {}).get("tb_translational_offset", (0.,0.,64.) )
+            rot = globals().get("monoblock", {}).get("tb_rotation_offset",  (0.0, 0.0, 0.0) )
+            tbprecut, tb, tbcutout, sensor, ball = generate_trackball( np.array(pos), np.array(rot))
+
+            full_monoblock = difference(full_monoblock, [tbprecut])
+            if debug_exports:
+                export_file(shape=full_monoblock, fname=path.join(r"..", "things", r"debug_thumb_test_1_shape".format(side)))
+            full_monoblock = union([full_monoblock, tb])
+            if debug_exports:
+                export_file(shape=full_monoblock, fname=path.join(r"..", "things", r"debug_thumb_test_2_shape".format(side)))
+            full_monoblock = difference(full_monoblock, [tbcutout])
+            if debug_exports:
+                export_file(shape=full_monoblock, fname=path.join(r"..", "things", r"debug_thumb_test_3_shape".format(side)))
+            full_monoblock = union([full_monoblock, sensor])
+            if debug_exports:
+                export_file(shape=full_monoblock, fname=path.join(r"..", "things", r"debug_thumb_test_4_shape".format(side)))
+
+        # set oled_mount_type base on monoblock.oled_mount_type to export additional files
+        mb_oled_mount_type = globals().get("monoblock", {}).get("oled_mount_type", 'NONE')
+        if mb_oled_mount_type in ("UNDERCUT", "SLIDING", "CLIP"):
+            globals()['oled_mount_type'] = mb_oled_mount_type
+            # copy configuration
+            old_cfg = globals().get("oled_configurations", {}).get(oled_mount_type,{})
+            for _k, _v  in old_cfg.items():
+                globals()[_k] = _v
+            # overwrite values
+            globals()['oled_center_row'] = 0
+            globals()['oled_mount_location_xyz'] = globals().get("monoblock", {}).get("oled_mount_location_xyz", (0.0, 20.0, 45.0))
+            globals()['oled_mount_rotation_xyz'] = globals().get("monoblock", {}).get("oled_mount_rotation_xyz", (13.0, 0.0, 0.0))
+
+            side = 'central'
+            if oled_mount_type == "UNDERCUT":
+                hole, frame = oled_undercut_mount_frame(side=side)
+            elif oled_mount_type == "SLIDING":
+                hole, frame = oled_sliding_mount_frame(side=side)
+            elif oled_mount_type == "CLIP":
+                hole, frame = oled_clip_mount_frame(side=side)
+
+            if debug_exports:
+                export_file(shape=frame, fname=path.join(r"..", "things", r"debug_oled1".format(side)))
+
+            full_monoblock = difference(full_monoblock, [hole])
+            full_monoblock = union([full_monoblock, frame])
+
+        export_file(shape=full_monoblock, fname=path.join(save_path, config_name + r"_monoblock"))
+
         # TODO fully  base plate integration
-        export_file(shape=union([mod_r, mod_l]), fname=path.join(save_path, config_name + r"_monoblock"))
         export_file(shape=union([base, mirror(base, 'YZ')]), fname=path.join(save_path, config_name + r"_monoblock_plate"))
 
     elif symmetry == "asymmetric":
