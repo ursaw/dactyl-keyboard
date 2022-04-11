@@ -19,32 +19,31 @@ shape_config = {
     ######################
 
     'save_dir': '.',
-    'config_name':  "DMONO2",
+    'config_name':  "URWI",
 
     'show_caps': False,
     'show_pcbs': False, #only runs if caps are shown, easist place to initially inject geometry
 
-    'nrows':  5, #5,  # key rows
+    'nrows':  4, #5,  # key rows
     'ncols':  6, #6,  # key columns
 
     'alpha':  pi / 12.0,  # curvature of the columns
     'beta':  pi / 36.0,  # curvature of the rows
     'centercol':  3,  # controls left_right tilt / tenting (higher number is more tenting)
     'centerrow_offset': 3,  # rows from max, controls front_back tilt
-    'tenting_angle': 25 * d2r, # 0.4, #  pi / 7.0,  # or, change this for more precise tenting control
+    'tenting_angle':  pi / 10.0,  # or, change this for more precise tenting control
 
     # symmetry states if it is a symmetric or asymmetric bui.  If asymmetric it doubles the generation time.
-    'symmetry':  "symmetric",  # "asymmetric" or "symmetric"  ignored when using monoblock
+    'symmetry':  "symmetric",  # "asymmetric" or "symmetric"
 
     'column_style_gt5':  "orthographic",
     'column_style':  "standard",  # options include :standard, :orthographic, and :fixed
-    # 'reduced_outer_keys': True,  
-    'reduced_inner_cols': 2,  #currently supports 0 or 2 due to thumb cluster attachment
-    'reduced_outer_cols': 2,
+    'reduced_outer_keys': False,
 
-    'thumb_offsets': [6, 3, -2],# [15, 5, -6],# [6, -3, 7],
+
+    'thumb_offsets':  [6, -3, 7],
     'keyboard_z_offset':  (
-        14  # controls overall height# original=9 with centercol=3# use 16 for centercol=2
+        11  # controls overall height# original=9 with centercol=3# use 16 for centercol=2
     ),
 
 
@@ -57,34 +56,25 @@ shape_config = {
     # post_adj':  post_size / 2
     'post_adj': 0,
 
-    ##############################q
-    # Monoblock PARAMETERS
-    ##############################
-    'monoblock': {
-        'spread': 90, # move outside from center: not easy to measure this number: just try...
-        'angle': 20,  # angle in degrees for each side out of X-axis
-    },
-
     ##############################
     # THUMB PARAMETERS
     ##############################
 
     # 'DEFAULT' 6-key, 'MINI' 5-key, 'CARBONFET' 6-key, 'MINIDOX' 3-key, 'TRACKBALL_ORBYL', 'TRACKBALL_CJ'
-    'thumb_style': 'MINIDOX',# '',
+    'thumb_style': 'MINIDOX',
     'default_1U_cluster': True, # only used with default, makes top right thumb cluster key 1U
     # Thumb key size.  May need slight oversizing, check w/ caps.  Additional spacing will be automatically added for larger keys.
     'minidox_Usize': 1.6,
     # Thumb plate rotations, anything other than 90 degree increments WILL NOT WORK.
 
-    'mini_index_key': False,
-      # Screw locations and extra screw locations for separable thumb, all from thumb origin
+    # Screw locations and extra screw locations for separable thumb, all from thumb origin
     # Pulled out of hardcoding as drastic changes to the geometry may require fixes to the screw mounts.
     # First screw in separable should be similar to the standard location as it will receive the same modifiers.
     'default_thumb_screw_xy_locations': [[-21, -58]],
     'default_separable_thumb_screw_xy_locations': [[-21, -58]],
     'mini_thumb_screw_xy_locations': [[-29, -52]],
     'mini_separable_thumb_screw_xy_locations': [[-29, -52], [-62, 10], [12, -25]],
-    'minidox_thumb_screw_xy_locations': [[-37, -30]],# [[-37, -34]]
+    'minidox_thumb_screw_xy_locations': [[-37, -34]],
     'minidox_separable_thumb_screw_xy_locations': [[-37, -34], [-62, 12], [10, -25]],
     'carbonfet_thumb_screw_xy_locations': [[-48, -37]],
     'carbonfet_separable_thumb_screw_xy_locations': [[-48, -37], [-52, 10], [12, -35]],
@@ -204,12 +194,12 @@ shape_config = {
     'wall_z_offset':  15,  # length of the first downward_sloping part of the wall
     'wall_x_offset':  5,  # offset in the x and/or y direction for the first downward_sloping part of the wall (negative)
     'wall_y_offset':  6,  # offset in the x and/or y direction for the first downward_sloping part of the wall (negative)
-    'left_wall_x_offset':  60,  # specific values for the left side due to the minimal wall.
+    'left_wall_x_offset':  12,  # specific values for the left side due to the minimal wall.
     'left_wall_z_offset':  3,  # specific values for the left side due to the minimal wall.
     'left_wall_lower_x_offset': 0,  # specific values for the lower left corner.
     'left_wall_lower_y_offset': 0,  # specific values for the lower left corner.
     'left_wall_lower_z_offset': 0,
-    'wall_thickness':  3,  # wall thickness parameter used on upper/mid stage of the wall
+    'wall_thickness':  4.5,  # wall thickness parameter used on upper/mid stage of the wall
     'wall_base_y_thickness':  4.5,  # wall thickness at the lower stage
     'wall_base_x_thickness':  4.5,  # wall thickness at the lower stage
 
@@ -240,7 +230,7 @@ shape_config = {
     # 'HS_UNDERCUT' = hot swap underside with undercut. Does not generate properly.  Hot swap step needs to be modified.
     # 'HS_NOTCH' = hot swap underside with notch.  Does not generate properly.  Hot swap step needs to be modified.
     # 'plate_style':  'NUB',
-    'plate_style': 'NOTCH',
+    'plate_style': 'NONE',
 
     'hole_keyswitch_height':  14.0,
     'hole_keyswitch_width':  14.0,
@@ -466,9 +456,9 @@ shape_config = {
         [0, 0, 0],
         [0, 2.82, -4.5],
         [0, 0, 0],
-        [0, -7, 5],# REDUCED STAGGER
-        [0, -7, 5],# REDUCED STAGGER
-        [0, -7, 5],# NOT USED IN MOST FORMATS (7th column)
+        [0, -6, 5],# REDUCED STAGGER
+        [0, -6, 5],# REDUCED STAGGER
+        [0, -6, 5],# NOT USED IN MOST FORMATS (7th column)
     ],
 
 }
@@ -509,5 +499,5 @@ if __name__ == '__main__':
     save_config()
 
     ## HERE FOR QUICK TESTING, SHOULD BE COMMENTED ON COMMIT
-    import dactyl_manuform
-    dactyl_manuform.run()
+    from dactyl_manuform import run
+    run()

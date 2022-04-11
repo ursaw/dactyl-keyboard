@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import pi
+from numpy import mod, pi
 import os.path as path
 import getopt, sys
 import json
@@ -2536,9 +2536,13 @@ def left_wall(side='right', skeleton=False, monoblock=False):
         ))
         shape = union([shape, temp_shape2])
 
-    if monoblock:
+
+    if monoblock and False:
+
+        topmerge = False
         # reference points
         wbpst = web_post()
+        wbptl = web_post_tl()
         wbmid = translate(wbpst,(-1*monoblock['spread'],0,0))
 
         bridge_hull = []
@@ -2546,10 +2550,20 @@ def left_wall(side='right', skeleton=False, monoblock=False):
         for i in range(corner+1):
 
             # thick part
-            pI1 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i ,  1, side=side)
-            pI2 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i , -1, side=side)
-            pO1 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i ,  1, side=side)
-            pO2 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i , -1, side=side)
+            if topmerge:
+                pst1 = wbpst
+                wbmid = translate(pst1,(-1*monoblock['spread'],0,0))
+                pst2 = wbmid
+            else:
+                pst1 = translate(wbpst, wall_locate1(-1, 0))
+                wbmid = translate(pst1,(-1*monoblock['spread'],0,0))
+                pst2 = translate(wbmid, wall_locate1(-1, 0))
+
+            pI1 = left_key_place(pst1, i ,  1, side=side)
+            pI2 = left_key_place(pst1, i , -1, side=side)
+
+            pO1 = left_key_place(pst2, i ,  1, side=side)
+            pO2 = left_key_place(pst2, i , -1, side=side)
             bridge_hull.append(hull_from_points([pI1, pI2 ,pO1, pO2]))
 
             if i == 0 :
@@ -2558,10 +2572,10 @@ def left_wall(side='right', skeleton=False, monoblock=False):
                                                  translate(pI2, (0, 0, 1000)),
                                                  translate(pO1, (0, 0, 1000))])
                 export_file(shape=cut_off_part, fname=path.join(save_path, config_name + r"_cut_off_part"))
-                pI1 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i, 1, side=side)
-                pI2 = left_key_place(translate(wbpst, wall_locate2(-1,-1)), i, 1, side=side)
-                pO1 = left_key_place(translate(wbmid, wall_locate2(-1,-1)), i, 1, side=side)
-                pO2 = left_key_place(translate(wbmid, wall_locate2(-1, 0)), i, 1, side=side)
+                pI1 = left_key_place(translate(wbpst, wall_locate1(-1, 0)), i, 1, side=side)
+                pI2 = left_key_place(translate(wbpst, wall_locate1(-1,-1)), i, 1, side=side)
+                pO1 = left_key_place(translate(wbmid, wall_locate1(-1,-1)), i, 1, side=side)
+                pO2 = left_key_place(translate(wbmid, wall_locate1(-1, 0)), i, 1, side=side)
                 bridge_hull.append(difference(bottom_hull([pI1,pI2,pO1,pO2]), [cut_off_part]))
                 # bridge_hull.append(bottom_hull([pI1,pI2,pO1,pO2]))
             elif i == corner:
@@ -2571,18 +2585,27 @@ def left_wall(side='right', skeleton=False, monoblock=False):
                                                  translate(pI1, (0, 0, 1000)),
                                                  translate(pO1, (0, 0, 1000))])
 
-                pI1 = left_key_place(translate(wbpst, wall_locate2(-1,0)), i, -1, side=side)
-                pI2 = left_key_place(translate(wbpst, wall_locate2(-1,1)), i, -1, side=side)
-                pO1 = left_key_place(translate(wbmid, wall_locate2(-1,1)), i, -1, side=side)
-                pO2 = left_key_place(translate(wbmid, wall_locate2(-1,0)), i, -1, side=side)
+                pI1 = left_key_place(translate(wbpst, wall_locate1(-1,0)), i, -1, side=side)
+                pI2 = left_key_place(translate(wbpst, wall_locate1(-1,1)), i, -1, side=side)
+                pO1 = left_key_place(translate(wbmid, wall_locate1(-1,1)), i, -1, side=side)
+                pO2 = left_key_place(translate(wbmid, wall_locate1(-1,0)), i, -1, side=side)
                 bridge_hull.append(difference(bottom_hull([pI1, pI2, pO1, pO2]), [cut_off_part]))
 
             # thin part
             if i < corner:
-                pI1 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i   ,-1, side=side)
-                pI2 = left_key_place(translate(wbpst, wall_locate2(-1, 0)), i+1 , 1 ,side=side)
-                pO1 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i   ,-1, side=side)
-                pO2 = left_key_place(translate(wbmid, wall_locate3(-1, 0)), i+1 , 1, side=side)
+                # thick part
+                if topmerge:
+                    pst1 = wbpst
+                    pst2 = translate(pst1,(-1*monoblock['spread'],0,0))
+                else:
+                    wbmid = translate(pst1,(-1*monoblock['spread'],0,0))
+                    pst1 = translate(wbpst, wall_locate1(-1, 0))
+                    pst2 = translate(wbmid, wall_locate1(-1, 0))
+
+                pI1 = left_key_place(pst1, i   ,-1, side=side)
+                pI2 = left_key_place(pst1, i+1 , 1 ,side=side)
+                pO1 = left_key_place(pst2, i   ,-1, side=side)
+                pO2 = left_key_place(pst2, i+1 , 1, side=side)
                 bridge_hull.append(hull_from_points([pI1, pI2 ,pO1, pO2]))
 
         bridge_hull.append(shape)
@@ -4402,6 +4425,8 @@ def run():
 
         cutobj = translate(box(cutdim, cutdim, cutdim), (cutdim/2, 0, 0))
         mod_l = difference(mod_l,[cutobj])
+        if False:
+            mod_l = None
         # TODO fully  base plate integration
         export_file(shape=union([mod_r, mod_l]), fname=path.join(save_path, config_name + r"_monoblock"))
         export_file(shape=union([base, mirror(base, 'YZ')]), fname=path.join(save_path, config_name + r"_monoblock_plate"))
@@ -4441,7 +4466,33 @@ def run():
         export_file(shape=union((oled_clip_mount_frame()[1], oled_clip())),
                             fname=path.join(save_path, config_name + r"_oled_clip_assy_test"))
 
+def stp_URWI():
+    """development code"""
+    import pathlib
+    save_path = pathlib.Path(__file__).parent.parent / 'things'
+    mv_outer = locals().get("monoblock", {}).get('spread', 100) # in mm
+
+    angle = locals().get("monoblock", {}).get('angle',0) # in mm 20 # pi/9.0   # 20 degrees
+    shape = rotate(translate(left_wall(side='right',monoblock=monoblock), [mv_outer, 0, 0]),(0,0,angle))
+
+    # pos, rot = tbcj_thumb_position_rotation()
+    pos = int(corner/2)
+    pos = left_key_place( web_post(), int(corner/2)  ,  1,)
+    rot = (0, 0, 0)
+    shape= union([shape, generate_trackball(pos, rot) ])
+
+    # cut off in the middle
+    if False:
+        cutdim = max(20000, mv_outer)
+        cutobj = translate(box(cutdim, cutdim, cutdim), (-cutdim/2, 0, 0))
+        shape = difference(shape,[cutobj])
+    export_file(shape=shape, fname=path.join(save_path, config_name + r"_WIP"))
+    return
+
 # base = baseplate()
 # export_file(shape=base, fname=path.join(save_path, config_name + r"_plate"))
 if __name__ == '__main__':
-    run()
+    if 1==0 and locals().get("monoblock", False):
+        stp_URWI()   
+    else: 
+        run()
