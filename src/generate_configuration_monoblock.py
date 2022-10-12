@@ -21,11 +21,12 @@ shape_config = {
     'save_dir': '.',
     'config_name':  "DMONO2",
 
-    'show_caps': False,
+    'show_caps': 'MX', #False,
     'show_pcbs': False, #only runs if caps are shown, easist place to initially inject geometry
 
-    'nrows':  5, #5,  # key rows
+    'nrows':  4, #5,  # key rows
     'ncols':  6, #6,  # key columns
+
 
     'alpha':  pi / 12.0,  # curvature of the columns
     'beta':  pi / 36.0,  # curvature of the rows
@@ -39,12 +40,12 @@ shape_config = {
     'column_style_gt5':  "orthographic",
     'column_style':  "standard",  # options include :standard, :orthographic, and :fixed
     # 'reduced_outer_keys': True,  
-    'reduced_inner_cols': 2,  #currently supports 0 or 2 due to thumb cluster attachment
-    'reduced_outer_cols': 2,
+    'reduced_inner_cols': 0,  #currently supports 0 or 2 due to thumb cluster attachment
+    'reduced_outer_cols': 0,
 
-    'thumb_offsets': [6, 3, -2],# [15, 5, -6],# [6, -3, 7],
+    'thumb_offsets': [10, 3, -2],# [15, 5, -6],# [6, -3, 7],
     'keyboard_z_offset':  (
-        14  # controls overall height# original=9 with centercol=3# use 16 for centercol=2
+        20  # controls overall height# original=9 with centercol=3# use 16 for centercol=2
     ),
 
 
@@ -61,10 +62,10 @@ shape_config = {
     # Monoblock PARAMETERS
     ##############################
     'monoblock': {
-        'spread': 90, # move outside from center: not easy to measure this number: just try...
+        'spread': 95, # move outside from center: not easy to measure this number: just try...
         'angle': 20,  # angle in degrees for each side out of X-axis
         'track_ball': True,                           # Trackball on top of monoblock
-        'tb_translational_offset': (0., -10., 54.),   # Usual do in center (x,y=0), but manually adjust hight
+        'tb_translational_offset': (0., -15., 60.),   # Usual do in center (x=0, y, z), but manually adjust hight
         'tb_rotation_offset': (-5.0, 0.0, 0.0),       # Usual only rotation about X-axis for symmetry
         'oled_mount_type':  'NONE',                   # deactivate with none, use keys as for normal OLEDs
         'oled_mount_location_xyz': (0.0, 37.0, 65.0), # absolute coordinates.
@@ -77,7 +78,7 @@ shape_config = {
     ##############################
 
     # 'DEFAULT' 6-key, 'MINI' 5-key, 'CARBONFET' 6-key, 'MINIDOX' 3-key, 'TRACKBALL_ORBYL', 'TRACKBALL_CJ'
-    'thumb_style': 'MINIDOX',# '',
+    'thumb_style': 'MINI',# '',
     'default_1U_cluster': True, # only used with default, makes top right thumb cluster key 1U
     # Thumb key size.  May need slight oversizing, check w/ caps.  Additional spacing will be automatically added for larger keys.
     'minidox_Usize': 1.6,
@@ -186,7 +187,7 @@ shape_config = {
     'trackball_modular_clearance': 0.5,  # height of ball from ring, used to create identical position to fixed.
 
     'ball_side': 'right', #'left', 'right', or 'both'
-    'ball_diameter': 34.0,
+    'ball_diameter': 57.0,
     'ball_wall_thickness': 3,  # should not be changed unless the import models are changed.
     'ball_gap': 1.0,
     'trackball_hole_diameter': 36.5,

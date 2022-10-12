@@ -2,9 +2,9 @@
     "ENGINE": "solid",
     "save_dir": ".",
     "config_name": "DMONO2",
-    "show_caps": false,
+    "show_caps": "MX",
     "show_pcbs": false,
-    "nrows": 5,
+    "nrows": 4,
     "ncols": 6,
     "alpha": 0.26179916666666664,
     "beta": 0.08726638888888888,
@@ -14,24 +14,46 @@
     "symmetry": "symmetric",
     "column_style_gt5": "orthographic",
     "column_style": "standard",
-    "reduced_inner_cols": 2,
-    "reduced_outer_cols": 2,
+    "reduced_inner_cols": 0,
+    "reduced_outer_cols": 0,
     "thumb_offsets": [
-        6,
+        10,
         3,
         -2
     ],
-    "keyboard_z_offset": 14,
+    "keyboard_z_offset": 20,
     "extra_width": 2.5,
     "extra_height": 1.0,
     "web_thickness": 5.1,
     "post_size": 0.1,
     "post_adj": 0,
     "monoblock": {
-        "spread": 90,
-        "angle": 20
+        "spread": 95,
+        "angle": 20,
+        "track_ball": true,
+        "tb_translational_offset": [
+            0.0,
+            -15.0,
+            60.0
+        ],
+        "tb_rotation_offset": [
+            -5.0,
+            0.0,
+            0.0
+        ],
+        "oled_mount_type": "NONE",
+        "oled_mount_location_xyz": [
+            0.0,
+            37.0,
+            65.0
+        ],
+        "oled_mount_rotation_xyz": [
+            18.0,
+            0.0,
+            0.0
+        ]
     },
-    "thumb_style": "MINIDOX",
+    "thumb_style": "MINI",
     "default_1U_cluster": true,
     "minidox_Usize": 1.6,
     "mini_index_key": false,
@@ -157,14 +179,14 @@
     "trackball_in_wall": false,
     "tbiw_ball_center_row": 0,
     "tbiw_translational_offset": [
-        2.0,
-        -12.0,
-        -10.0
+        6.0,
+        8.0,
+        -2.0
     ],
     "tbiw_rotation_offset": [
-        30.0,
-        -10.0,
-        0.0
+        0.0,
+        0.0,
+        20.0
     ],
     "tbiw_left_wall_x_offset_override": 50.0,
     "tbiw_left_wall_z_offset_override": 0.0,
@@ -248,8 +270,8 @@
     "trackball_modular_ball_height": 3.0,
     "trackball_modular_ring_height": 10.0,
     "trackball_modular_clearance": 0.5,
-    "ball_side": "both",
-    "ball_diameter": 34.0,
+    "ball_side": "right",
+    "ball_diameter": 57.0,
     "ball_wall_thickness": 3,
     "ball_gap": 1.0,
     "trackball_hole_diameter": 36.5,
@@ -287,7 +309,7 @@
     "left_wall_lower_x_offset": 0,
     "left_wall_lower_y_offset": 0,
     "left_wall_lower_z_offset": 0,
-    "wall_thickness": 3,
+    "wall_thickness": 4.5,
     "wall_base_y_thickness": 4.5,
     "wall_base_x_thickness": 4.5,
     "wall_base_back_thickness": 4.5,

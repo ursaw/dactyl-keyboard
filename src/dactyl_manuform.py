@@ -4009,7 +4009,7 @@ def screw_insert_shape(bottom_radius, top_radius, height):
 
 
 def screw_insert(column, row, bottom_radius, top_radius, height, side='right'):
-    debugprint('screw_insert()')
+    debugprint(f'screw_insert({side})')
     shift_right = column == lastcol
     shift_left = column == 0
     shift_up = (not (shift_right or shift_left)) and (row == 0)
@@ -4060,7 +4060,7 @@ def screw_insert(column, row, bottom_radius, top_radius, height, side='right'):
             row,
         )
 
-
+    debugprint(f"Screw position {row},{column}:{position}")
     shape = screw_insert_shape(bottom_radius, top_radius, height)
     shape = translate(shape, [position[0], position[1], height / 2])
 
@@ -4552,6 +4552,10 @@ def run():
             if debug_exports:
                 export_file(shape=full_monoblock, fname=path.join(r"..", "things", r"debug_thumb_test_3_shape".format(side)))
             full_monoblock = union([full_monoblock, sensor])
+
+            if show_caps:  # add trackball if switches are shown
+                full_monoblock = union([full_monoblock, ball])
+
             if debug_exports:
                 export_file(shape=full_monoblock, fname=path.join(r"..", "things", r"debug_thumb_test_4_shape".format(side)))
 
